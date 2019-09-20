@@ -14,7 +14,7 @@ def main():
 
     # for sure works until this point
 
-    # completely subjective
+    # complete toss up
     game.play_game(game)
 
 

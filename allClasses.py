@@ -34,32 +34,43 @@ class Player:
 
         for player in game.players:
             for dice in player.player_hand:
-                dice_on_table_list.append(dice.rolled_number)
                 if dice.rolled_number == game.die_wager:
                     game.die_wager_counter += 1
+                dice_on_table_list.append(dice.rolled_number)
+                # if dice.rolled_number == game.die_wager:
+                #     game.die_wager_counter += 1
 
         for player in game.active_players:
             for dice in player.player_hand:
-                dice_on_table_list.append(dice.rolled_number)
                 if dice.rolled_number == game.die_wager:
                     game.die_wager_counter += 1
+                dice_on_table_list.append(dice.rolled_number)
+                # if dice.rolled_number == game.die_wager:
+                #     game.die_wager_counter += 1
 
         print('The dice on the table are:')
         print(*dice_on_table_list)
 
-        if game.active_players[0].quantity_wager >= game.die_wager_counter:
+        if game.quantity_wager >= game.die_wager_counter:
             #this one prints twice and removes two dice for some reason
             bullshitter = game.active_players[1]
             bullshitter.player_hand.pop(0)
             print(f'{bullshitter.name} loses a dice111')
-        else:
+        elif game.quantity_wager < game.die_wager_counter:
             #this one works
             wageree = game.active_players[0]
             wageree.player_hand.pop(0)
             print(f'{wageree.name} loses a dice')
 
+        game.reset_players_lists()
         game.clear_wagers()
+        self.clear_player_wagers()
 
+    #added this in today
+    def clear_player_wagers(self):
+
+        self.die_wager = 0
+        self.quantity_wager = 0
 
 class UserPlayer(Player):
 
@@ -83,7 +94,7 @@ class UserPlayer(Player):
 
         while ok_wager == False:
 
-            quantity_wager = int(input("What quantity would you like to wager?"))
+            quantity_wager = int(input("What quantity would you like to wager? You will enter the die next."))
             die_wager = int(input("What die would you like to wager?"))
 
             if quantity_wager > game.quantity_wager:
@@ -105,6 +116,7 @@ class UserPlayer(Player):
                     print('The die wager is not larger than previously wagered die. Try again')
 
         game.add_next_active_player()
+        game.remove_old_active_player()
 
     def wager_or_bullshit(self, game):
         self.display_dice()
@@ -119,7 +131,7 @@ class UserPlayer(Player):
                 redo_answer = False
             else:
                 print("Invalid answer choose either w for wager or b for bullshit.")
-        game.remove_old_active_player()
+
 
 
 class ComputerPlayer(Player):
@@ -147,7 +159,7 @@ class ComputerPlayer(Player):
         self.minimum_quantity_wager = 0
 
         # threshold percentage for wager
-        self.threshold_percent = 0.35
+        self.threshold_percent = 0.45
 
         # percent of the unsure dice that must be applicable to wager
         self.percent_of_unsure_must_be_applicable = 0.000
@@ -236,6 +248,7 @@ class ComputerPlayer(Player):
         print(f'{self.name} die wager: {max_die[2]}')
 
         game.add_next_active_player()
+        game.remove_old_active_player()
 
     def decide(self, game):
 
@@ -250,7 +263,6 @@ class ComputerPlayer(Player):
         self.calculate_the_minimum_wager_quantity(game)
         self.calculate_odds_of_required_wager(game)
         self.decide(game)
-        game.remove_old_active_player()
 
 
     def clear_die_counter(self):
@@ -270,18 +282,17 @@ class Game:
         self.players = []
         self.active_players = []
 
-    # used in the set up of the game
+
     def fill_players(self):
         player_names_list = ['Bugs Bunny', 'Daffy Duck', 'Marvin The Martian']
         while len(self.players) < 1:
-            username= input('What is your name?')
+            username = input('What is your name?')
             player = UserPlayer(username)
             self.players.append(player)
         while len(self.players) < 4:
             for player_name in player_names_list:
                 player = ComputerPlayer(player_name)
                 self.players.append(player)
-
 
     def fill_players_hands(self):
         for player in self.players:
@@ -324,29 +335,55 @@ class Game:
             popped_player = self.players.pop(0)
             self.active_players.append(popped_player)
 
+    def reset_players_lists(self):
+
+        while len(self.active_players) > 0:
+            popped_player = self.active_players.pop(0)
+            self.players.append(popped_player)
+
     def remove_old_active_player(self):
         while len(self.active_players) > 2:
             #maybe we make it ad next player and remove previous player seperate methods to give us more flexibility
             popped_player = self.active_players.pop(0)
             self.players.append(popped_player)
 
+    # def play_round(self, game):
+    #
+    #     # plays a round
+    #     self.all_players_roll()
+    #     self.choose_active_players()
+    #     self.calculate_dice_left()
+    #     self.check_players_elgibility()
+    #
+    #     while self.die_wager == 0 and self.quantity_wager == 0:
+    #         for player in self.active_players:
+    #             player.wager(game)
+    #
+    #     while self.die_wager != 0 or self.quantity_wager != 0:
+    #         for player in self.active_players:
+    #             player.wager_or_bullshit(game)
+    #             """go through and double check the choose active players is working right and then theyre being called in the right spots"""
+    #             self.check_players_elgibility()
+    #             self.add_next_active_player() # added this in today
+    #             self.remove_old_active_player() # added this in today
+    #
+    #     self.reset_players_lists()
+
     def play_round(self, game):
 
-        # plays a round
-        game.all_players_roll()
-        game.choose_active_players()
-        game.calculate_dice_left()
-        game.check_players_elgibility()
+        self.check_players_elgibility()
+        self.all_players_roll()
+        self.choose_active_players()
+        self.calculate_dice_left()
 
         while self.die_wager == 0 and self.quantity_wager == 0:
             for player in self.active_players:
                 player.wager(game)
 
         while self.die_wager != 0 or self.quantity_wager != 0:
-            for player in self.active_players:
-                player.wager_or_bullshit(game)
-                """go through and double check the choose active players is working right and then theyre being called in the right spots"""
-                game.check_players_elgibility()
+            active_player = self.active_players[1]
+            active_player.wager_or_bullshit(game)
+            self.check_players_elgibility()
 
 
 
