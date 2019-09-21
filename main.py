@@ -11,7 +11,6 @@ def main():
     # game is set up
     game.fill_players()
     game.fill_players_hands()
-
     # for sure works until this point
 
     # complete toss up
